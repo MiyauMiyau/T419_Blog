@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(rm -rf*)"
+    ]
+  }
+}

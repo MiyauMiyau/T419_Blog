@@ -1,0 +1,10 @@
+_site/
+.jekyll-cache/
+.jekyll-metadata
+.bundle/
+vendor/
+.sass-cache/
+
+# 로컬 실행 상태/로그 — 매일 밤 바뀌므로 커밋 대상에서 제외
+run-log/*.log
+state.json

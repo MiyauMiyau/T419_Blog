@@ -1,0 +1,19 @@
+title: "야간 자동 블로그"
+description: "Claude Code로 매일 밤 자동 조사·작성·게시되는 블로그"
+# GitHub Pages에 올린 뒤 실제 저장소 URL로 아래 두 값을 바꿔주세요.
+# 예: repo가 https://github.com/USERNAME/REPO 라면
+#   url: "https://USERNAME.github.io"
+#   baseurl: "/REPO"
+url: ""
+baseurl: ""
+
+theme: minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+show_excerpts: true
+
+# 새 글이 아직 없어도 Jekyll이 잘 빌드되도록 최소 설정만 둠.
