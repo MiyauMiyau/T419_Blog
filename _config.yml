@@ -5,6 +5,10 @@ baseurl: "/T419_Blog"
 
 theme: minima
 
+# 카테고리(한글 포함)를 URL에 넣지 않도록 permalink 고정 — 안 그러면 기본값이
+# categories를 그대로 URL 경로에 써서 한글이 퍼센트 인코딩된 지저분한 주소가 됨
+permalink: /:year/:month/:day/:title/
+
 plugins:
   - jekyll-feed
   - jekyll-sitemap

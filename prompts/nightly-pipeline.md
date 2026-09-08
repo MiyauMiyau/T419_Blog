@@ -50,8 +50,9 @@
   `null`로, `topics`를 `[]`로 되돌려서 시리즈를 종료하고, 1단계(일반 Scout)로
   진행하세요.
 
-이번 글을 게시한 뒤(4단계에서) `completed_index`를 1 증가시켜서 `series-state.json`에
-다시 저장하고, 그 파일도 이번 커밋에 함께 포함하세요.
+**중요**: `completed_index`를 1 증가시킨 최종 값을 4단계(Publish)에서 커밋하기 **전에**
+`series-state.json`에 미리 반영해두세요. 글 파일과 `series-state.json`을 **한 번의
+커밋**으로 같이 올려야 합니다 (커밋을 두 번 나눠서 하지 마세요).
 
 ## 1단계 — Scout (주제 발굴, 활성 시리즈가 없을 때만)
 
