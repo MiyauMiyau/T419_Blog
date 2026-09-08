@@ -1,9 +1,5 @@
-title: "야간 자동 블로그"
-description: "Claude Code로 매일 밤 자동 조사·작성·게시되는 블로그"
-# GitHub Pages에 올린 뒤 실제 저장소 URL로 아래 두 값을 바꿔주세요.
-# 예: repo가 https://github.com/USERNAME/REPO 라면
-#   url: "https://USERNAME.github.io"
-#   baseurl: "/REPO"
+title: "데일리 스코프"  # TODO(임시): 사용자 확정 후 교체 예정
+description: "기술과 트렌드를 짧게 정리해 전하는 블로그"
 url: "https://sil-ro.github.io"
 baseurl: "/T419_Blog"
 
@@ -16,4 +12,6 @@ plugins:
 
 show_excerpts: true
 
-# 새 글이 아직 없어도 Jekyll이 잘 빌드되도록 최소 설정만 둠.
+# 상단 메뉴에 표시할 페이지
+header_pages:
+  - categories.md
