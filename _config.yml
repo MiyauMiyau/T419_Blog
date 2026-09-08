@@ -1,6 +1,6 @@
-title: "데일리 스코프"  # TODO(임시): 사용자 확정 후 교체 예정
-description: "기술과 트렌드를 짧게 정리해 전하는 블로그"
-url: "https://sil-ro.github.io"
+title: "데일리 스코프"
+description: "요즘 화제가 되는 이야기들을 짧게 정리해서 전합니다"
+url: "https://miyaumiyau.github.io"
 baseurl: "/T419_Blog"
 
 theme: minima

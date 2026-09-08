@@ -14,8 +14,10 @@ GitHub Pages(Jekyll)에 올리는 무인 파이프라인.
 
 ## 저장소/배포 정보
 
-- GitHub: https://github.com/Sil-ro/T419_Blog (public)
-- Pages 주소: https://sil-ro.github.io/T419_Blog/ (Settings → Pages: `main` / `/(root)`)
+- GitHub: https://github.com/MiyauMiyau/T419_Blog (public) — 이 계정은 이 블로그 전용으로
+  새로 만든 익명 계정(원래 이름 Sil-ro에서 개명, 다른 실명 프로젝트와 공유 안 함)
+- Pages 주소: https://miyaumiyau.github.io/T419_Blog/ (Settings → Pages: `main` / `/(root)`)
+- 블로그 타이틀: "데일리 스코프" (자동화/AI 티 제거한 일반 블로그 브랜딩)
 - 로컬 git 커밋 작성자(이 저장소에 로컬로만 설정, 전역 아님): `jin <jin88x@gmail.com>`
 - push 인증: Git Credential Manager(`credential.helper=manager`, Git for Windows 내장)가
   브라우저 로그인으로 처리. 별도 PAT/SSH 설정 안 함.
