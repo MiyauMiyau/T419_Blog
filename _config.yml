@@ -4,8 +4,8 @@ description: "Claude Code로 매일 밤 자동 조사·작성·게시되는 블�
 # 예: repo가 https://github.com/USERNAME/REPO 라면
 #   url: "https://USERNAME.github.io"
 #   baseurl: "/REPO"
-url: ""
-baseurl: ""
+url: "https://sil-ro.github.io"
+baseurl: "/T419_Blog"
 
 theme: minima
 
