@@ -71,12 +71,13 @@ Blog_Worker/
 - [x] run-nightly.sh 드라이런 테스트 (야간 게이트/상한/롤오버/사용량 감지 전부 검증,
       `runs` 파싱 정규식 버그 1건 발견 후 수정함)
 - [x] GitHub 저장소 연결(origin) + 첫 push + Pages 활성화
-- [ ] **claude CLI 설치 확인 및 로그인 미완료** — 사용자 PC에 `claude` CLI 자체가 아직
-      설치 안 되어 있었음 (`irm https://claude.ai/install.ps1 | iex`로 설치 안내함).
-      설치 후 반드시 `claude` 대화형 1회 실행으로 로그인해서
-      `%USERPROFILE%\.claude\.credentials.json`에 자격 증명이 저장되어야
-      `claude -p`가 무인 실행에서 멈추지 않음. 설치 경로 확인 후
-      `scripts/run-nightly.sh`의 `CLAUDE_BIN` 값을 필요시 전체 경로로 교체할 것.
+- [x] claude CLI 설치 완료 (네이티브 설치, `C:\Users\SRJIN\.local\bin\claude.exe`).
+      설치 스크립트가 PATH에 자동으로 못 넣어줘서 `[Environment]::SetEnvironmentVariable`로
+      사용자 PATH에 직접 추가함. 대화형 로그인(`/logout` 후 재로그인으로 계정 교정)까지
+      완료, `claude -p "test"` 무인 모드 응답 확인함. `CLAUDE_BIN`은 기본값 `claude`
+      그대로 사용(PATH에 있으므로 전체 경로 불필요).
+- [x] 작업 스케줄러 실제 트리거(`schtasks /run`) 1회 확인 — bash 실행되고 낮 시간대
+      게이트에 걸려 조용히 종료되는 것까지 정상 동작 확인함.
 - [ ] 실제 `claude -p` 전체 파이프라인(웹검색→작성→커밋→push) 1회 실행 테스트 아직
       안 함 (게시 행위라 사용자 승인 후 진행 예정).
 - [ ] `run-log/` 며칠 지켜보고 `MAX_RUNS_PER_NIGHT` 조정.
