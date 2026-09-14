@@ -28,10 +28,17 @@ function Convert-MarkdownBodyToHtml {
             }
             $htmlBlocks += "<ul>`n" + ($items -join "`n") + "`n</ul>"
         } else {
-            $t = ($lines -join ' ')
-            $t = [System.Web.HttpUtility]::HtmlEncode($t)
-            $t = $t -replace '\*\*(.+?)\*\*', '<strong>$1</strong>'
-            $htmlBlocks += "<p>$t</p>"
+            $paragraphText = ($lines -join ' ')
+            # 문장 단위(마침표/물음표/느낌표 뒤 공백)로 쪼개서 한 문장씩 <p>로 분리
+            # -> 티스토리 블로그 특유의 "한 줄씩 띄어서 여백 주기" 느낌
+            $sentences = [regex]::Split($paragraphText.Trim(), '(?<=[.!?])\s+') |
+                Where-Object { $_.Trim() -ne '' }
+
+            foreach ($sentence in $sentences) {
+                $t = [System.Web.HttpUtility]::HtmlEncode($sentence)
+                $t = $t -replace '\*\*(.+?)\*\*', '<strong>$1</strong>'
+                $htmlBlocks += "<p>$t</p>"
+            }
         }
     }
 
