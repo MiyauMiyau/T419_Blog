@@ -13,11 +13,23 @@ $tistoryWriteUrl = "https://t442-mya.tistory.com/manage/newpost/"
 function Convert-MarkdownBodyToHtml {
     param([string]$Text)
 
-    $blocks = [regex]::Split($Text.Trim(), "(?:\r?\n){2,}")
-    $htmlBlocks = @()
+    # 티스토리 에디터(카카오 에디터)가 실제로 쓰는 마크업에 맞춤:
+    # - 모든 문단에 data-ke-size="size16"
+    # - 빈 줄 대신 "&nbsp;만 있는 문단"으로 여백을 만듦
+    # - 첫 블록(인트로)은 점(.) 세 줄로 열고, 그 뒤에 구분선(hr)
+    $gap = '<p data-ke-size="size16">&nbsp;</p>'
+    $hr = '<hr contenteditable="false" data-ke-type="horizontalRule" data-ke-style="style3" />'
 
-    foreach ($block in $blocks) {
-        $block = $block.Trim()
+    $blocks = [regex]::Split($Text.Trim(), "(?:\r?\n){2,}")
+    $out = @()
+
+    $out += '<p data-ke-size="size16">.</p>'
+    $out += '<p data-ke-size="size16">.</p>'
+    $out += '<p data-ke-size="size16">.</p>'
+    $out += $gap
+
+    for ($bi = 0; $bi -lt $blocks.Count; $bi++) {
+        $block = $blocks[$bi].Trim()
         if (-not $block) { continue }
 
         $lines = $block -split "\r?\n"
@@ -29,23 +41,31 @@ function Convert-MarkdownBodyToHtml {
                 $t = $t -replace '\*\*(.+?)\*\*', '<strong>$1</strong>'
                 "<li>$t</li>"
             }
-            $htmlBlocks += "<ul>`n" + ($items -join "`n") + "`n</ul>"
+            $out += '<ul style="list-style-type: disc;" data-ke-list-type="disc">' + "`n" + ($items -join "`n") + "`n</ul>"
+            $out += $gap
         } else {
             $paragraphText = ($lines -join ' ')
-            # 문장 단위(마침표/물음표/느낌표 뒤 공백)로 쪼개서 한 문장씩 <p>로 분리
-            # -> 티스토리 블로그 특유의 "한 줄씩 띄어서 여백 주기" 느낌
+            # 문장 단위(마침표/물음표/느낌표 뒤 공백)로 쪼개서 한 문장씩 <p>로 분리하고
+            # 문장 사이사이에 여백 문단을 넣어 "한 줄씩 띄어서 읽는" 느낌을 냄
             $sentences = [regex]::Split($paragraphText.Trim(), '(?<=[.!?])\s+') |
                 Where-Object { $_.Trim() -ne '' }
 
-            foreach ($sentence in $sentences) {
-                $t = [System.Web.HttpUtility]::HtmlEncode($sentence)
+            for ($si = 0; $si -lt $sentences.Count; $si++) {
+                $t = [System.Web.HttpUtility]::HtmlEncode($sentences[$si])
                 $t = $t -replace '\*\*(.+?)\*\*', '<strong>$1</strong>'
-                $htmlBlocks += "<p>$t</p>"
+                $out += "<p data-ke-size=`"size16`">$t</p>"
+                $out += $gap
             }
+        }
+
+        # 첫 블록(인트로) 다음에만 구분선 — 인트로와 본문을 시각적으로 분리
+        if ($bi -eq 0 -and $blocks.Count -gt 1) {
+            $out += $hr
+            $out += $gap
         }
     }
 
-    return ($htmlBlocks -join "`n`n")
+    return ($out -join "`n")
 }
 
 $latest = Get-ChildItem -Path $postsDir -Recurse -Filter *.md -ErrorAction SilentlyContinue |
