@@ -1,7 +1,7 @@
 timezone: Asia/Seoul
 
-title: "데일리 스코프"
-description: "요즘 화제가 되는 이야기들을 짧게 정리해서 전합니다"
+title: "프렛노트"  # 후보: 코드노트, 타브살롱, 핑거노트 — 마음에 안 들면 바로 바꿔도 됨
+description: "기타 코드와 악보, 연주 팁을 파고드는 블로그"
 url: "https://miyaumiyau.github.io"
 baseurl: "/T419_Blog"
 
