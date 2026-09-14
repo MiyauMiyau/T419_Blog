@@ -16,25 +16,59 @@ function Convert-MarkdownBodyToHtml {
     # 티스토리 에디터(카카오 에디터)가 실제로 쓰는 마크업에 맞춤:
     # - 모든 문단에 data-ke-size="size16"
     # - 빈 줄 대신 "&nbsp;만 있는 문단"으로 여백을 만듦
-    # - 첫 블록(인트로)은 점(.) 세 줄로 열고, 그 뒤에 구분선(hr)
+    # 글에 ##/### 헤딩이 있으면 "SEO 리스티클" 포맷으로 간주해서 문장 쪼개기 없이
+    # 문단 단위로, 헤딩 앞에는 구분선을 넣는다. 헤딩이 없으면(스터디 시리즈 일기체)
+    # 문장 단위로 쪼개고 점(.) 세 줄 오프닝 연출을 쓴다.
     $gap = '<p data-ke-size="size16">&nbsp;</p>'
     $hr = '<hr contenteditable="false" data-ke-type="horizontalRule" data-ke-style="style3" />'
 
     $blocks = [regex]::Split($Text.Trim(), "(?:\r?\n){2,}")
+
+    $hasHeadings = $false
+    foreach ($b in $blocks) {
+        if ($b.Trim() -match '^#{2,4}\s+') { $hasHeadings = $true; break }
+    }
+
     $out = @()
 
-    $out += '<p data-ke-size="size16">.</p>'
-    $out += '<p data-ke-size="size16">.</p>'
-    $out += '<p data-ke-size="size16">.</p>'
-    $out += $gap
+    if (-not $hasHeadings) {
+        $out += '<p data-ke-size="size16">.</p>'
+        $out += '<p data-ke-size="size16">.</p>'
+        $out += '<p data-ke-size="size16">.</p>'
+        $out += $gap
+    }
 
     for ($bi = 0; $bi -lt $blocks.Count; $bi++) {
         $block = $blocks[$bi].Trim()
         if (-not $block) { continue }
 
         $lines = $block -split "\r?\n"
+        $firstLine = $lines[0]
 
-        if ($lines[0] -match '^\s*-\s+') {
+        if ($firstLine -match '^(#{2,4})\s+(.*)$') {
+            $level = $Matches[1].Length
+            $headingText = [System.Web.HttpUtility]::HtmlEncode($Matches[2].Trim())
+            if ($level -eq 2) { $out += $hr }
+            $out += "<h$level>$headingText</h$level>"
+            $out += $gap
+        }
+        elseif ($block -match '^!\[([^\]]*)\]\(([^)]+)\)$') {
+            $alt = [System.Web.HttpUtility]::HtmlEncode($Matches[1])
+            $src = $Matches[2]
+            $out += "<p data-ke-size=`"size16`"><img src=`"$src`" alt=`"$alt`" style=`"max-width:100%;height:auto;border-radius:8px;`" /></p>"
+            $out += $gap
+        }
+        elseif ($firstLine -match '^\s*\d+\.\s+') {
+            $items = foreach ($line in $lines) {
+                $t = $line -replace '^\s*\d+\.\s+', ''
+                $t = [System.Web.HttpUtility]::HtmlEncode($t)
+                $t = $t -replace '\*\*(.+?)\*\*', '<strong>$1</strong>'
+                "<li>$t</li>"
+            }
+            $out += '<ol data-ke-list-type="decimal">' + "`n" + ($items -join "`n") + "`n</ol>"
+            $out += $gap
+        }
+        elseif ($firstLine -match '^\s*-\s+') {
             $items = foreach ($line in $lines) {
                 $t = $line -replace '^\s*-\s+', ''
                 $t = [System.Web.HttpUtility]::HtmlEncode($t)
@@ -43,23 +77,31 @@ function Convert-MarkdownBodyToHtml {
             }
             $out += '<ul style="list-style-type: disc;" data-ke-list-type="disc">' + "`n" + ($items -join "`n") + "`n</ul>"
             $out += $gap
-        } else {
+        }
+        else {
             $paragraphText = ($lines -join ' ')
-            # 문장 단위(마침표/물음표/느낌표 뒤 공백)로 쪼개서 한 문장씩 <p>로 분리하고
-            # 문장 사이사이에 여백 문단을 넣어 "한 줄씩 띄어서 읽는" 느낌을 냄
-            $sentences = [regex]::Split($paragraphText.Trim(), '(?<=[.!?])\s+') |
-                Where-Object { $_.Trim() -ne '' }
-
-            for ($si = 0; $si -lt $sentences.Count; $si++) {
-                $t = [System.Web.HttpUtility]::HtmlEncode($sentences[$si])
+            if ($hasHeadings) {
+                $t = [System.Web.HttpUtility]::HtmlEncode($paragraphText.Trim())
                 $t = $t -replace '\*\*(.+?)\*\*', '<strong>$1</strong>'
                 $out += "<p data-ke-size=`"size16`">$t</p>"
                 $out += $gap
+            } else {
+                # 문장 단위(마침표/물음표/느낌표 뒤 공백)로 쪼개서 한 문장씩 <p>로 분리
+                # -> 티스토리 블로그 특유의 "한 줄씩 띄어서 여백 주기" 느낌 (일기체 전용)
+                $sentences = [regex]::Split($paragraphText.Trim(), '(?<=[.!?])\s+') |
+                    Where-Object { $_.Trim() -ne '' }
+
+                foreach ($sentence in $sentences) {
+                    $t = [System.Web.HttpUtility]::HtmlEncode($sentence)
+                    $t = $t -replace '\*\*(.+?)\*\*', '<strong>$1</strong>'
+                    $out += "<p data-ke-size=`"size16`">$t</p>"
+                    $out += $gap
+                }
             }
         }
 
-        # 첫 블록(인트로) 다음에만 구분선 — 인트로와 본문을 시각적으로 분리
-        if ($bi -eq 0 -and $blocks.Count -gt 1) {
+        # 일기체 한정: 첫 블록(인트로) 다음에만 구분선
+        if ((-not $hasHeadings) -and $bi -eq 0 -and $blocks.Count -gt 1) {
             $out += $hr
             $out += $gap
         }

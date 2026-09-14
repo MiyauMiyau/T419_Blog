@@ -12,7 +12,8 @@
       "Bash(git push:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(curl -s https://api.unsplash.com/*)"
     ],
     "deny": [
       "Bash(git push --force*)",

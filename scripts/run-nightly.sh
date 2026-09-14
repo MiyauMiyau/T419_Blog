@@ -95,6 +95,14 @@ fi
 
 cd "$REPO_DIR" || exit 1
 
+# .env가 있으면 읽어서 환경변수로 내보냄 (예: UNSPLASH_ACCESS_KEY) — claude 하위 프로세스가 상속받음
+if [ -f "$REPO_DIR/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$REPO_DIR/.env"
+  set +a
+fi
+
 "$CLAUDE_BIN" -p "$(cat "$PROMPT_FILE")" >> "$log_file" 2>&1
 claude_exit=$?
 

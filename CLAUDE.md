@@ -23,6 +23,11 @@ GitHub Pages(Jekyll)에 올리는 무인 파이프라인.
   범위는 `prompts/nightly-pipeline.md` 1단계 참고). `study` 시리즈(빅데이터분석기사)는
   이 전환과 무관하게 그대로 병행 진행. "기타 악보 생성 웹 도구/사이트"는 나중에
   별도 프로젝트로 논의하기로 함 — 지금은 블로그 글 소재로만 다룸.
+- **`music` 글 포맷(2026-09-14 전환)**: 실제 광고 수익을 내는 블로그(momotrends.tistory.com
+  참고)를 벤치마크해서, 개인 에세이가 아니라 **SEO 리스티클**(후킹 제목+숫자,
+  존댓말체, `##` 소제목, 번호 리스트, FAQ 마무리, Unsplash 이미지 자동삽입)로
+  전환. `study` 시리즈는 여전히 일기체 그대로 유지 — 장르가 다른 두 트랙.
+  자세한 포맷은 `prompts/nightly-pipeline.md` 2단계-5,6 참고.
 - 로컬 git 커밋 작성자(이 저장소에 로컬로만 설정, 전역 아님): `jin <jin88x@gmail.com>`
 - push 인증: Git Credential Manager(`credential.helper=manager`, Git for Windows 내장)가
   브라우저 로그인으로 처리. 별도 PAT/SSH 설정 안 함.
@@ -106,23 +111,24 @@ Blog_Worker/
 - [x] 실제 `claude -p` 전체 파이프라인 실행 테스트 완료 (2026-09-09, 2편 게시 확인:
       tech 1편 + study 시리즈 1편). URL 퍼멀링크(한글 카테고리 인코딩 문제)와
       타임존(날짜가 하루 밀려 보이던 문제) 버그 발견 후 수정함.
-- [ ] **⚠️ 2026-09-09~09-14 닷새간 자동 실행이 한 번도 안 됨** (run-log 비어있음).
-      작업 스케줄러가 "대화형만" 로그온 모드라 PC가 꺼져있거나 로그아웃 상태면
-      실행 자체가 안 됨. 관리자 권한 없어서 S4U(로그오프 상태 실행) 전환도 실패했던
-      전례 있음 (README/과거 대화 참고). 사용자가 PC를 밤새 켜두고 로그인 상태 유지
-      하는지 확인 필요 — 근본 해결하려면 관리자 권한으로 재시도하거나 사용자가
-      직접 작업 스케줄러에서 비밀번호 입력하며 전환해야 함.
-- [x] **티스토리 보조 자동화 완료 (2026-09-14)**: 티스토리 Open API는 2024-02
-      공식 종료되어 사용 불가 확인(공식 GitHub 문서). 매크로/브라우저자동화(캡챠
-      우회 포함)는 계정정지 리스크+제가 하면 안 되는 영역이라 배제. 대신
-      `scripts/tistory-assist.ps1`이 매일 20:00(작업 스케줄러 `tistory-assist-20h`)에
-      최신 글 본문을 클립보드에 복사 + 티스토리 글쓰기 페이지
-      (https://t442-mya.tistory.com/manage/newpost/)를 브라우저로 자동 오픈. 로그인·
-      제목 입력·발행 버튼은 사용자가 직접. (⚠️ .ps1 파일에 한글을 직접 쓸 땐 UTF-8
-      BOM 없으면 PowerShell 5.1이 깨뜨림 — `Set-Content -Encoding UTF8`로 저장할 것.)
 - [x] **PC 켜짐 감지 자동실행 (2026-09-14)**: `nightly-blog-pipeline` 작업에
       `StartWhenAvailable` 설정 켬 — PC가 꺼져 있어서 놓친 시간별 트리거를 PC
       켜지자마자 바로 한 번 실행. (`/sc onlogon` 트리거 자체는 관리자 권한 없어서
-      생성 불가 — 전례와 동일한 제약.) 단, 22시 전에 PC를 끄면 여전히 못 잡음
-      (PC가 꺼진 동안은 근본적으로 아무 것도 못 돎).
+      생성 불가.) 단, 22시 전에 PC를 끄면 여전히 못 잡음 (2026-09-09~09-14 닷새간
+      자동실행 공백의 원인이었음 — PC를 꺼두는 습관 때문).
+- [x] **티스토리 보조 자동화 (2026-09-14, 계속 다듬는 중)**: 티스토리 Open API는
+      2024-02 공식 종료 확인(공식 GitHub 문서), 매크로/브라우저자동화(캡챠 우회
+      포함)는 배제. `scripts/tistory-assist.ps1`이 매일 20:00에:
+      1) 최신 글을 티스토리(카카오 에디터) 마크업으로 변환 (data-ke-size 속성,
+         &nbsp; 여백 문단, 헤딩/번호목록/이미지 지원)
+      2) 클립보드에 바로 넣지 않고 **로컬 미리보기 페이지**(`tistory-preview/latest.html`)
+         를 먼저 띄움 — "복사하고 티스토리 열기" 버튼을 눌러야 그때 클립보드 복사
+         + 글쓰기 페이지 오픈. 로그인·제목 입력·발행은 항상 사용자가 직접.
+      (⚠️ .ps1에 한글 직접 쓸 땐 UTF-8 BOM 필요 — `Set-Content -Encoding UTF8`.)
+- [ ] **Unsplash API 키 대기 중 (2026-09-14)**: `music` 글에 섹션별 이미지를 자동
+      삽입하기로 함. `.env`(gitignore됨) 파일에 `UNSPLASH_ACCESS_KEY=` 자리를
+      만들어뒀고, `run-nightly.sh`가 있으면 읽어서 export, `.claude/settings.json`에
+      `Bash(curl -s https://api.unsplash.com/*)` 허용도 추가함. **사용자가
+      unsplash.com/developers에서 무료 Access Key 발급받아 `.env`에 채워야 작동함.**
+      키가 비어있으면 프롬프트 지시대로 이미지 없이 진행(에러 안 남).
 - [ ] `run-log/` 며칠 지켜보고 `MAX_RUNS_PER_NIGHT` 조정.

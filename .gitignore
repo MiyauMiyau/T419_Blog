@@ -11,3 +11,6 @@ state.json
 
 # 티스토리 미리보기 — 로컬 확인용 임시 파일, 커밋 대상 아님
 tistory-preview/
+
+# API 키 등 비밀값 — 절대 커밋하지 않음
+.env
