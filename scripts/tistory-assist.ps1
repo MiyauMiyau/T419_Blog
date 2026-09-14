@@ -1,9 +1,42 @@
-﻿# 매일 저녁 실행: 가장 최근에 쓴 글을 찾아 본문을 클립보드에 복사하고
-# 티스토리 글쓰기 페이지를 브라우저로 열어둔다. 로그인/발행은 사용자가 직접.
+﻿# 매일 저녁 실행: 가장 최근에 쓴 글을 찾아 본문을 HTML로 변환해 클립보드에 복사하고
+# 티스토리 글쓰기 페이지(HTML 모드)를 브라우저로 열어둔다. 로그인/발행은 사용자가 직접.
+
+Add-Type -AssemblyName System.Web
 
 $repo = "E:\Claude_Project\Blog_Worker"
 $postsDir = Join-Path $repo "_posts"
 $tistoryWriteUrl = "https://t442-mya.tistory.com/manage/newpost/"
+
+function Convert-MarkdownBodyToHtml {
+    param([string]$Text)
+
+    $blocks = [regex]::Split($Text.Trim(), "(?:\r?\n){2,}")
+    $htmlBlocks = @()
+
+    foreach ($block in $blocks) {
+        $block = $block.Trim()
+        if (-not $block) { continue }
+
+        $lines = $block -split "\r?\n"
+
+        if ($lines[0] -match '^\s*-\s+') {
+            $items = foreach ($line in $lines) {
+                $t = $line -replace '^\s*-\s+', ''
+                $t = [System.Web.HttpUtility]::HtmlEncode($t)
+                $t = $t -replace '\*\*(.+?)\*\*', '<strong>$1</strong>'
+                "<li>$t</li>"
+            }
+            $htmlBlocks += "<ul>`n" + ($items -join "`n") + "`n</ul>"
+        } else {
+            $t = ($lines -join ' ')
+            $t = [System.Web.HttpUtility]::HtmlEncode($t)
+            $t = $t -replace '\*\*(.+?)\*\*', '<strong>$1</strong>'
+            $htmlBlocks += "<p>$t</p>"
+        }
+    }
+
+    return ($htmlBlocks -join "`n`n")
+}
 
 $latest = Get-ChildItem -Path $postsDir -Recurse -Filter *.md -ErrorAction SilentlyContinue |
     Sort-Object LastWriteTime -Descending |
@@ -28,7 +61,10 @@ if ($parts.Count -ge 3) {
     $body = $raw
 }
 
-$clipboardText = "[제목] $title`r`n`r`n$body"
+$bodyHtml = Convert-MarkdownBodyToHtml -Text $body
+$titleEncoded = [System.Web.HttpUtility]::HtmlEncode($title)
+
+$clipboardText = "<!-- 제목(제목 입력란에 직접 옮겨주세요): $titleEncoded -->`r`n`r`n$bodyHtml"
 Set-Clipboard -Value $clipboardText
 
 Start-Process $tistoryWriteUrl
