@@ -8,3 +8,6 @@ vendor/
 # 로컬 실행 상태/로그 — 매일 밤 바뀌므로 커밋 대상에서 제외
 run-log/*.log
 state.json
+
+# 티스토리 미리보기 — 로컬 확인용 임시 파일, 커밋 대상 아님
+tistory-preview/

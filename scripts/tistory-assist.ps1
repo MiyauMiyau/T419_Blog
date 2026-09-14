@@ -1,10 +1,13 @@
-﻿# 매일 저녁 실행: 가장 최근에 쓴 글을 찾아 본문을 HTML로 변환해 클립보드에 복사하고
-# 티스토리 글쓰기 페이지(HTML 모드)를 브라우저로 열어둔다. 로그인/발행은 사용자가 직접.
+﻿# 매일 저녁 실행: 가장 최근에 쓴 글을 찾아 HTML로 변환한 뒤,
+# 클립보드에 바로 넣지 않고 "미리보기 + 확인 버튼" 페이지를 만들어 브라우저로 연다.
+# 사용자가 미리보기를 보고 버튼을 눌러야 그때 클립보드에 복사 + 티스토리 글쓰기 페이지가 열린다.
 
 Add-Type -AssemblyName System.Web
 
 $repo = "E:\Claude_Project\Blog_Worker"
 $postsDir = Join-Path $repo "_posts"
+$previewDir = Join-Path $repo "tistory-preview"
+$previewFile = Join-Path $previewDir "latest.html"
 $tistoryWriteUrl = "https://t442-mya.tistory.com/manage/newpost/"
 
 function Convert-MarkdownBodyToHtml {
@@ -71,8 +74,77 @@ if ($parts.Count -ge 3) {
 $bodyHtml = Convert-MarkdownBodyToHtml -Text $body
 $titleEncoded = [System.Web.HttpUtility]::HtmlEncode($title)
 
+# 실제로 클립보드에 들어갈(=티스토리에 붙여넣을) 원본 소스
 $clipboardText = "<!-- 제목(제목 입력란에 직접 옮겨주세요): $titleEncoded -->`r`n`r`n$bodyHtml"
-Set-Clipboard -Value $clipboardText
 
-Start-Process $tistoryWriteUrl
+if (-not (Test-Path $previewDir)) {
+    New-Item -ItemType Directory -Path $previewDir | Out-Null
+}
+
+$previewHtml = @"
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>미리보기 - $titleEncoded</title>
+<style>
+  body { font-family: -apple-system, "Malgun Gothic", "맑은 고딕", sans-serif; max-width: 720px; margin: 0 auto; padding: 0 24px 80px; line-height: 1.9; color: #222; background: #fafafa; }
+  h1 { font-size: 1.6em; padding: 24px 0 16px; margin: 0; }
+  #content p { margin: 1.3em 0; }
+  #content ul { margin: 1.3em 0; padding-left: 1.4em; }
+  .toolbar { position: sticky; top: 0; background: #fafafa; padding: 16px 0; border-bottom: 1px solid #ddd; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; z-index: 10; }
+  button { font-size: 1em; padding: 10px 20px; border-radius: 8px; border: none; background: #0064ff; color: white; cursor: pointer; }
+  button:hover { background: #0050cc; }
+  button:disabled { background: #9cbcf0; cursor: default; }
+  .status { color: #666; }
+  .card { background: #fff; border-radius: 12px; padding: 8px 32px 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <button id="copyBtn">복사하고 티스토리 열기</button>
+    <span class="status" id="status"></span>
+  </div>
+  <div class="card">
+    <h1>$titleEncoded</h1>
+    <div id="content">
+$bodyHtml
+    </div>
+  </div>
+
+  <textarea id="rawSrc" style="position:absolute; left:-9999px; top:-9999px;">$clipboardText</textarea>
+
+  <script>
+    const btn = document.getElementById('copyBtn');
+    const status = document.getElementById('status');
+    const ta = document.getElementById('rawSrc');
+
+    btn.addEventListener('click', () => {
+      ta.style.display = 'block';
+      ta.focus();
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.style.display = 'none';
+
+      if (ok) {
+        status.textContent = '복사됨! 티스토리 여는 중...';
+        btn.disabled = true;
+        window.open('$tistoryWriteUrl', '_blank');
+      } else {
+        status.textContent = '복사 실패 — 직접 아래 텍스트를 선택해서 복사해주세요.';
+        ta.style.display = 'block';
+        ta.style.position = 'static';
+        ta.style.width = '100%';
+        ta.style.height = '200px';
+      }
+    });
+  </script>
+</body>
+</html>
+"@
+
+Set-Content -Path $previewFile -Value $previewHtml -Encoding UTF8
+
+Start-Process $previewFile
 
