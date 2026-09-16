@@ -106,8 +106,8 @@ Blog_Worker/
       사용자 PATH에 직접 추가함. 대화형 로그인(`/logout` 후 재로그인으로 계정 교정)까지
       완료, `claude -p "test"` 무인 모드 응답 확인함. `CLAUDE_BIN`은 기본값 `claude`
       그대로 사용(PATH에 있으므로 전체 경로 불필요).
-- [x] 작업 스케줄러 실제 트리거(`schtasks /run`) 1회 확인 — bash 실행되고 낮 시간대
-      게이트에 걸려 조용히 종료되는 것까지 정상 동작 확인함.
+- [x] ~~작업 스케줄러 실제 트리거(`schtasks /run`) 1회 확인~~ **→ 이 확인 자체가
+      잘못됐었음, 아래 2026-09-16 사고 기록 참고.**
 - [x] 실제 `claude -p` 전체 파이프라인 실행 테스트 완료 (2026-09-09, 2편 게시 확인:
       tech 1편 + study 시리즈 1편). URL 퍼멀링크(한글 카테고리 인코딩 문제)와
       타임존(날짜가 하루 밀려 보이던 문제) 버그 발견 후 수정함.
@@ -131,4 +131,27 @@ Blog_Worker/
       `Bash(curl -s https://api.unsplash.com/*)` 허용도 추가함. **사용자가
       unsplash.com/developers에서 무료 Access Key 발급받아 `.env`에 채워야 작동함.**
       키가 비어있으면 프롬프트 지시대로 이미지 없이 진행(에러 안 남).
+- [x] **🐛 근본 원인 발견·수정 (2026-09-16): 09-09 이후 작업 스케줄러가 매번 조용히
+      실패하고 있었음.** 사용자가 "같은 글만 반복해서 뜬다"고 보고해서 조사함.
+      - **원인**: 2026-09-08 S4U 로그오프-실행 전환을 시도하다 실패했을 때, 복구
+        과정에서 `nightly-blog-pipeline` 작업의 실행 명령을
+        `bash -lc "cd /e/Claude_Project/Blog_Worker && ./scripts/run-nightly.sh"`
+        에서 실수로 `bash -lc "./scripts/run-nightly.sh"` (cd 없이 상대경로만)로
+        재생성해버림. `-lc`(로그인 셸)는 사용자 홈 디렉터리에서 시작하므로, 그
+        경로엔 `scripts/run-nightly.sh`가 없어 매번 `bash: ... No such file or
+        directory` (exit 127)로 즉시 실패 — 로그 파일도 안 남기고 죽어서 겉보기엔
+        "그냥 조용히 넘어간 것"처럼 보였음.
+      - **왜 그동안 못 잡았나**: 2026-09-09 "정상 트리거 확인"이라고 기록했던
+        `schtasks /run` 테스트가 사실은 **이 버그로 인한 실패**를 "낮 시간대라
+        조용히 종료된 정상 동작"으로 잘못 해석한 것이었음 (둘 다 로그를 안 남겨서
+        겉으로 구분이 안 됨). 이후 실제 게시 테스트는 전부 내가 수동으로
+        `FORCE_RUN=1 ./scripts/run-nightly.sh`를 직접 그 폴더 안에서 실행해서
+        했기 때문에 이 버그를 우회해서 테스트한 셈이 되어 발견을 못 함.
+      - **수정**: Action을 `bash -lc "/e/Claude_Project/Blog_Worker/scripts/run-nightly.sh"`
+        (절대경로, cwd 무관하게 동작) + `WorkingDirectory` 명시로 변경. 실제 밤
+        시간대에 `schtasks /run`으로 재검증 — state.json 정상 갱신 + study 시리즈
+        2편째("분석 기획, 생각보다 사람 얘기가 더 많았다") 정상 게시·push 확인함.
+      - **교훈**: 앞으로 스케줄러 동작을 "확인"할 땐 반드시 `run-log/`에 실제 로그가
+        새로 생겼는지, `마지막 결과` 코드가 0인지까지 봐야 함 — 로그 없음 =
+        정상(낮 시간대)일 수도, 시작조차 못 한 실패일 수도 있어서 구분 필요.
 - [ ] `run-log/` 며칠 지켜보고 `MAX_RUNS_PER_NIGHT` 조정.
