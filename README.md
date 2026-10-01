@@ -1,3 +1,12 @@
+# 현재 운영 방식 (2026-10-01)
+
+이 저장소의 야간 글 생성은 **Codex CLI**가 기본입니다. Windows 작업 스케줄러의 `nightly-blog-pipeline`이 `scripts/run-nightly.sh`를 실행하며, 22:00~08:00 사이 하루 최대 1편을 생성해 GitHub Pages 저장소에 푸시합니다. `AGENT_BACKEND=claude`는 명시적인 롤백용입니다.
+
+티스토리 발행은 Codex 앱의 `티스토리 새 글 자동 발행` 일일 자동화가 최신 GitHub 글과 티스토리 게시물을 비교한 뒤 진행합니다. 로그인 세션이 만료되면 자동화는 멈추고 사용자 로그인이 필요합니다. 기존 `tistory-assist-20h` Windows 작업은 꺼져 있습니다.
+
+아래의 Claude 중심 설치·운영 설명은 이전 기록입니다. 현재 실행 기준은 `CODEX.md`와 `AGENTS.md`를 참고하세요.
+
+---
 # 야간 자동 블로그 파이프라인
 
 Claude Code CLI(추가 API 키/과금 없이, Team Standard 구독 사용량만으로)를 이용해
@@ -96,17 +105,20 @@ GitHub Pages 호스팅 자체는 무료입니다. 하지만 **애드센스 등�
 4. **트리거** 탭: 새로 만들기 → "매일" → 반복 간격 "1시간마다", 시작 시각은 아무 때나
    (예: 00:00), 기간을 "무기한"으로
 5. **동작** 탭: 새로 만들기 →
-   - 프로그램/스크립트: `C:\Program Files\Git\usr\bin\bash.exe` (이 PC에 설치된 Git Bash
-     경로 — 다르면 `where bash`로 확인)
-   - 인수 추가: `-lc "scripts/run-nightly.sh"`
+   - 프로그램/스크립트: `C:\Windows\System32\wscript.exe`
+   - 인수 추가: `"E:\Claude_Project\Blog_Worker\scripts\run-hidden.vbs" "C:\Program Files\Git\usr\bin\bash.exe" -lc "/e/Claude_Project/Blog_Worker/scripts/run-nightly.sh"`
    - 시작 위치: `E:\Claude_Project\Blog_Worker`
 6. **조건/설정** 탭: "AC 전원에 연결된 경우에만 시작" 체크 해제 권장(노트북이면 배터리
    중에도 동작하게), "작업이 실패하면 다시 시작" 옵션은 꺼두는 걸 권장 (사용량 제한으로
    실패한 걸 재시도하면 안 되므로)
 
-명령줄로 등록하고 싶다면(관리자 권한 필요):
-```bash
-schtasks /create /tn "nightly-blog-pipeline" /tr "\"C:\Program Files\Git\usr\bin\bash.exe\" -lc \"cd /e/Claude_Project/Blog_Worker && ./scripts/run-nightly.sh\"" /sc hourly /mo 1 /ru "%USERNAME%" /rl LIMITED
+`run-hidden.vbs`는 Git Bash 콘솔을 숨기고 종료 코드를 작업 스케줄러에 전달합니다.
+기존 작업의 실행 명령만 수정할 때는 PowerShell에서 다음을 실행합니다:
+
+```powershell
+$arguments = '"E:\Claude_Project\Blog_Worker\scripts\run-hidden.vbs" "C:\Program Files\Git\usr\bin\bash.exe" -lc "/e/Claude_Project/Blog_Worker/scripts/run-nightly.sh"'
+$action = New-ScheduledTaskAction -Execute 'C:\Windows\System32\wscript.exe' -Argument $arguments -WorkingDirectory 'E:\Claude_Project\Blog_Worker'
+Set-ScheduledTask -TaskName 'nightly-blog-pipeline' -Action $action
 ```
 
 ### 방법 B. WSL crontab (WSL을 쓰는 경우)
