@@ -9,6 +9,17 @@ NIGHT_END_HOUR=8      # 이 시각 전까지 야간으로 간주 (22~08 = 다음
 MAX_RUNS_PER_NIGHT=1  # 한밤에 글 생성 시도는 한 번만 한다 (중복 게시 방지)
 CLAUDE_BIN="${CLAUDE_BIN:-claude}"  # claude CLI 경로. PATH에 없으면 전체 경로로 바꿀 것.
 CODEX_BIN="${CODEX_BIN:-codex}"    # Codex CLI 경로.
+# Windows 작업 스케줄러의 PATH에는 Codex 앱 경로가 없을 수 있다.
+# 앱 업데이트 때 해시 디렉터리가 바뀌므로 LOCALAPPDATA 아래에서 현재 설치본을 찾는다.
+if [ "$CODEX_BIN" = "codex" ] && ! command -v codex >/dev/null 2>&1 && [ -n "${LOCALAPPDATA:-}" ]; then
+  codex_install_root="$LOCALAPPDATA/OpenAI/Codex/bin"
+  for codex_candidate in "$codex_install_root"/*/codex.exe; do
+    if [ -x "$codex_candidate" ]; then
+      CODEX_BIN="$codex_candidate"
+      break
+    fi
+  done
+fi
 AGENT_BACKEND="${AGENT_BACKEND:-codex}"  # Codex 기본 실행. 필요하면 claude로 명시적 롤백.
 # ================================================================
 
